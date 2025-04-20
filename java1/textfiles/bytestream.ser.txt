@@ -1,0 +1,127 @@
+import java.io.*;
+import java.net.*;
+import java.util.ArrayList;
+
+class Student {
+    int rollNo;
+    String name;
+    int cgpa;
+    String department;
+
+    Student(int rollNo, String name, int cgpa, String department) {
+        this.rollNo = rollNo;
+        this.name = name;
+        this.cgpa = cgpa;
+        this.department = department;
+    }
+
+    @Override
+    public String toString() {
+        return "Roll No: " + rollNo + ", Name: " + name + ", CGPA: " + cgpa + ", Dept: " + department;
+    }
+}
+
+public class ByteServer {
+    public static void main(String[] args) {
+        ArrayList<Student> students = new ArrayList<>();
+
+        try {
+            ServerSocket serverSocket = new ServerSocket(5000);
+            System.out.println("Server started. Waiting for a client...");
+
+            Socket socket = serverSocket.accept();
+            System.out.println("Client connected.");
+
+            // Receive file from client
+            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+
+            // Read file name and size
+            String fileName = dataInputStream.readUTF();
+            long fileSize = dataInputStream.readLong();
+            File receivedFile = new File("received_" + fileName);
+            
+            // Write received bytes to file
+            FileOutputStream fileOutputStream = new FileOutputStream(receivedFile);
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            long totalBytesRead = 0;
+            while (totalBytesRead < fileSize && (bytesRead = dataInputStream.read(buffer)) != -1) {
+                bufferedOutputStream.write(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+            }
+
+            bufferedOutputStream.close();
+            System.out.println("File received and saved as: " + receivedFile.getName());
+
+            // Process the student data from the file
+            BufferedReader fileReader = new BufferedReader(new FileReader(receivedFile));
+            String line;
+            while ((line = fileReader.readLine()) != null) {
+                String[] parts = line.trim().split("\\s+");
+
+                if (parts.length == 4) { // Ensures exactly 4 fields (RollNo Name CGPA Department)
+                    try {
+                        int rollNo = Integer.parseInt(parts[0]);
+                        String name = parts[1];
+                        int cgpa = Integer.parseInt(parts[2]);
+                        String department = parts[3];
+
+                        students.add(new Student(rollNo, name, cgpa, department));
+                    } catch (NumberFormatException e) {
+                        System.out.println("Skipping invalid data (Number Format Error): " + line);
+                    }
+                } else {
+                    System.out.println("Incorrect format: " + line);
+                }
+            }
+            fileReader.close();
+
+            // Print received student data
+            System.out.println("\nReceived Student Data:");
+            for (Student s : students) {
+                System.out.println(s);
+            }
+
+            // Count students per department
+            int mechCount = 0, itCount = 0, civilCount = 0, eceCount = 0, cseCount = 0;
+
+            for (Student s : students) {
+                switch (s.department.toUpperCase()) {
+                    case "MECH": mechCount++; break;
+                    case "IT": itCount++; break;
+                    case "CIVIL": civilCount++; break;
+                    case "ECE": eceCount++; break;
+                    case "CSE": cseCount++; break;
+                    default: System.out.println("Unknown department: " + s.department);
+                }
+            }
+
+            // Print department count
+            System.out.println("\nStudent Count per Department:");
+            System.out.println("MECH: " + mechCount);
+            System.out.println("IT: " + itCount);
+            System.out.println("CIVIL: " + civilCount);
+            System.out.println("ECE: " + eceCount);
+            System.out.println("CSE: " + cseCount);
+
+            // Print students with CGPA > 8
+            System.out.println("\nStudents with CGPA Above 8:");
+            for (Student s : students) {
+                if (s.cgpa > 8) {
+                    System.out.println(s);
+                }
+            }
+
+            // Close connections
+            dataInputStream.close();
+            socket.close();
+            serverSocket.close();
+            System.out.println("Server terminated after processing one client.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

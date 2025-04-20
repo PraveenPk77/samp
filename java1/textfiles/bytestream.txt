@@ -1,0 +1,45 @@
+import java.io.*;
+import java.net.*;
+
+public class ByteClient {
+    public static void main(String[] args) {
+        try {
+            // Connect to the server
+            Socket socket = new Socket("localhost", 5000);
+            System.out.println("Connected to server.");
+
+            // File path in Windows
+            File file = new File("C:\\java1\\cat\\lab.txt");  
+            if (!file.exists()) {
+                System.out.println("File not found!");
+                return;
+            }
+
+            // Stream to read file and send it as bytes
+            FileInputStream fileInputStream = new FileInputStream(file);
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+
+            // Send file name and size
+            dataOutputStream.writeUTF(file.getName());
+            dataOutputStream.writeLong(file.length());
+
+            // Send file content as bytes
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
+                dataOutputStream.write(buffer, 0, bytesRead);
+            }
+
+            System.out.println("File sent successfully.");
+
+            // Close resources
+            bufferedInputStream.close();
+            dataOutputStream.close();
+            socket.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

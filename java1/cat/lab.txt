@@ -1,0 +1,5 @@
+1 Alice 9 MECH
+2 Bob 8 IT
+3 Charlie 7 CIVIL
+4 David 10 ECE
+5 Eve 6 CSE

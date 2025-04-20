@@ -1,0 +1,46 @@
+package bytestrweam;
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+public class Client {
+    public static void main(String[] args) {
+        try {
+            // Connect to server
+            Socket socket = new Socket("localhost", 9988);
+            System.out.println("Connected to server.");
+
+            // Output and Input Streams
+            OutputStream out = socket.getOutputStream();
+            InputStream in = socket.getInputStream();
+
+            // Getting user input
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Enter Name: ");
+            String name = scanner.nextLine();
+            System.out.print("Enter Age: ");
+            String age = scanner.nextLine();
+            System.out.print("Enter Blood Group: ");
+            String bloodGroup = scanner.nextLine();
+
+            // Format data and send it
+            String message = name + "|" + age + "|" + bloodGroup;
+            out.write(message.getBytes());
+            System.out.println("Data sent to server.");
+
+            // Receiving response from server
+            byte[] buffer = new byte[1024];
+            int receivedLen = in.read(buffer);
+            String receivedMsg = new String(buffer, 0, receivedLen);
+            System.out.println("Client received: " + receivedMsg);
+
+            // Closing resources
+            scanner.close();
+            out.close();
+            in.close();
+            socket.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
